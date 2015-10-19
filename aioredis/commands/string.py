@@ -100,8 +100,7 @@ class StringCommandsMixin:
             raise TypeError("start argument must be int")
         if not isinstance(end, int):
             raise TypeError("end argument must be int")
-        return self.execute(b'GETRANGE', key, start, end,
-                                  encoding=encoding)
+        return self.execute(b'GETRANGE', key, start, end, encoding=encoding)
 
     def getset(self, key, value, *, encoding=_NOTSET):
         """Set the string value of a key and return its old value."""

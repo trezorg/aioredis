@@ -53,7 +53,7 @@ class SortedSetCommandsMixin:
         if min > max:
             raise ValueError("min could not be grater then max")
         return self.execute(b'ZCOUNT', key,
-                                  *_encode_min_max(exclude, min, max))
+                            *_encode_min_max(exclude, min, max))
 
     def zincrby(self, key, increment, member):
         """Increment the score of a member in a sorted set.
