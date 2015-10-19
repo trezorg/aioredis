@@ -67,35 +67,42 @@ class Redis(GenericCommandsMixin, StringCommandsMixin,
         return '<Redis {!r}>'.format(self._conn)
 
     def close(self):
+        # TODO: drop direct connection access
         self._conn.close()
 
     @asyncio.coroutine
     def wait_closed(self):
+        # TODO: drop direct connection access
         yield from self._conn.wait_closed()
 
     @property
     def db(self):
         """Currently selected db index."""
+        # TODO: drop direct connection access
         return self._conn.db
 
     @property
     def encoding(self):
         """Current set codec or None."""
+        # TODO: drop direct connection access
         return self._conn.encoding
 
     @property
     def connection(self):
         """:class:`aioredis.RedisConnection` instance."""
+        # TODO: drop direct connection access
         return self._conn
 
     @property
     def in_transaction(self):
         """Set to True when MULTI command was issued."""
+        # TODO: drop direct connection access
         return self._conn.in_transaction
 
     @property
     def closed(self):
         """True if connection is closed."""
+        # TODO: drop direct connection access
         return self._conn.closed
 
     def auth(self, password):
@@ -103,26 +110,49 @@ class Redis(GenericCommandsMixin, StringCommandsMixin,
 
         This method wraps call to :meth:`aioredis.RedisConnection.auth()`
         """
-        return self._conn.auth(password)
+        # TODO: drop direct connection access
+        conn = self.get_connection()
+        return conn.auth(password)
 
     def echo(self, message, *, encoding=_NOTSET):
         """Echo the given string."""
-        return self._conn.execute('ECHO', message, encoding=encoding)
+        return self.execute('ECHO', message, encoding=encoding)
 
     def ping(self, *, encoding=_NOTSET):
         """Ping the server."""
-        return self._conn.execute('PING', encoding=encoding)
+        return self.execute('PING', encoding=encoding)
 
     def quit(self):
         """Close the connection."""
-        return self._conn.execute('QUIT')
+        return self.execute('QUIT')
 
     def select(self, db):
         """Change the selected database for the current connection.
 
         This method wraps call to :meth:`aioredis.RedisConnection.select()`
         """
-        return self._conn.select(db)
+        conn = self.get_connection()
+        return conn.select(db)
+
+    def get_connection(self, command=None, keys=None):
+        """Acquire connection for specific command and keys.
+
+        Both arguments can be None for choosing random connection.
+        """
+        # TODO: implement picking connection from pool
+        return self._conn
+
+    def execute(self, command, *args, encoding=_NOTSET):
+        """Executes redis command.
+
+        Acquires connection and executes command.
+        """
+        conn_or_fut = self.get_connection(command)
+        if isinstance(conn_or_fut, asyncio.Future):
+            # working with pool and need to wait for connecion to
+            #   be established;
+            return None
+        return conn_or_fut.execute(command, *args, encoding=encoding)
 
 
 @asyncio.coroutine

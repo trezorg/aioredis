@@ -12,7 +12,7 @@ class PubSubCommandsMixin:
 
     def publish(self, channel, message):
         """Post a message to channel."""
-        return self._conn.execute(b'PUBLISH', channel, message)
+        return self.execute(b'PUBLISH', channel, message)
 
     def publish_json(self, channel, obj):
         """Post a JSON-encoded message to channel."""
@@ -25,6 +25,7 @@ class PubSubCommandsMixin:
         Returns :func:`asyncio.gather()` coroutine which when done will return
         a list of subscribed channels.
         """
+        # FIXME:
         conn = self._conn
         return wait_return_channels(
             conn.execute_pubsub(b'SUBSCRIBE', channel, *channels),
@@ -55,7 +56,7 @@ class PubSubCommandsMixin:
         args = [b'PUBSUB', b'CHANNELS']
         if pattern is not None:
             args.append(pattern)
-        return self._conn.execute(*args)
+        return self.execute(*args)
 
     def pubsub_numsub(self, *channels):
         """Returns the number of subscribers for the specified channels."""
@@ -64,7 +65,7 @@ class PubSubCommandsMixin:
 
     def pubsub_numpat(self):
         """Returns the number of subscriptions to patterns."""
-        return self._conn.execute(b'PUBSUB', b'NUMPAT')
+        return self.execute(b'PUBSUB', b'NUMPAT')
 
     @property
     def channels(self):

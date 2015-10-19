@@ -26,12 +26,14 @@ class TransactionsCommandsMixin:
 
     def unwatch(self):
         """Forget about all watched keys."""
+        # TODO: drop direct connection access
         fut = self._conn.execute(b'UNWATCH')
         return wait_ok(fut)
 
     def watch(self, key, *keys):
         """Watch the given keys to determine execution of the MULTI/EXEC block.
         """
+        # TODO: drop direct connection access
         fut = self._conn.execute(b'WATCH', key, *keys)
         return wait_ok(fut)
 
@@ -49,8 +51,9 @@ class TransactionsCommandsMixin:
         >>> yield from asyncio.gather(fut1, fut2)
         [1, 1]
         """
-        return MultiExec(self._conn, self.__class__,
-                         loop=self._conn._loop)
+        conn = self.get_connection(None, None)
+        return MultiExec(conn, self.__class__,
+                         loop=conn._loop)
 
     def pipeline(self):
         """Returns :class:`Pipeline` object to execute bulk of commands.
@@ -76,8 +79,9 @@ class TransactionsCommandsMixin:
         >>> yield from asyncio.gather(fut1, fut2)
         [2, 2]
         """
-        return Pipeline(self._conn, self.__class__,
-                        loop=self._conn._loop)
+        conn = self.get_connection(None, None)
+        return Pipeline(conn, self.__class__,
+                        loop=conn._loop)
 
 
 class _RedisBuffer:
