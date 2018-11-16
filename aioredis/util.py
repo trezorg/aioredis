@@ -10,14 +10,10 @@ _NOTSET = object()
 _converters = {
     bytes: lambda val: val,
     bytearray: lambda val: val,
-    str: lambda val: val.encode('utf-8'),
-    int: lambda val: str(val).encode('utf-8'),
-    float: lambda val: str(val).encode('utf-8'),
+    str: lambda val: val.encode(),
+    int: lambda val: b'%d' % val,
+    float: lambda val: b'%r' % val,
 }
-
-
-def _bytes_len(sized):
-    return str(len(sized)).encode('utf-8')
 
 
 def encode_command(*args):
@@ -26,20 +22,15 @@ def encode_command(*args):
     Raises TypeError if any of args not of bytearray, bytes, float, int, or str
     type.
     """
-    buf = bytearray()
+    buf = bytearray(b'*%d\r\n' % len(args))
 
-    def add(data):
-        return buf.extend(data + b'\r\n')
-
-    add(b'*' + _bytes_len(args))
-    for arg in args:
-        if type(arg) in _converters:
+    try:
+        for arg in args:
             barg = _converters[type(arg)](arg)
-            add(b'$' + _bytes_len(barg))
-            add(barg)
-        else:
-            raise TypeError("Argument {!r} expected to be of bytearray, bytes,"
-                            " float, int, or str type".format(arg))
+            buf.extend(b'$%d\r\n%s\r\n' % (len(barg), barg))
+    except KeyError as exc:
+        raise TypeError("Argument {!r} expected to be of bytearray, bytes,"
+                        " float, int, or str type".format(arg))
     return buf
 
 
@@ -214,3 +205,21 @@ def _parse_uri_options(params, path, password):
     if 'timeout' in params:
         options['timeout'] = float(params['timeout'])
     return options
+
+
+def encode_str(obj):
+    obj_type = type(obj)
+    if obj_type in _converters:
+        return _converters[obj_type](obj)
+
+    return obj
+
+
+class cached_property:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, cls=None):
+        name = self.func.__name__
+        result = instance.__dict__[name] = self.func(instance)
+        return result

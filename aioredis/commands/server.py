@@ -46,7 +46,7 @@ class ServerCommandsMixin:
         """Stop processing commands from clients for *timeout* milliseconds.
 
         :raises TypeError: if timeout is not int
-        :raises ValueError: if timeout is less then 0
+        :raises ValueError: if timeout is less than 0
         """
         if not isinstance(timeout, int):
             raise TypeError("timeout argument must be int")
@@ -280,7 +280,7 @@ def parse_info(info):
         section = section[2:].lower()
         res[section] = tmp = {}
         for line in block:
-            key, value = line.split(':')
+            key, value = line.split(':', 1)
             if ',' in line and '=' in line:
                 value = dict(map(lambda i: i.split('='), value.split(',')))
             tmp[key] = value
